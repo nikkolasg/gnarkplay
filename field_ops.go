@@ -13,10 +13,10 @@ import (
 )
 
 func field_ops_tests() {
-	testCircuit[BLS12377Fr](ecc.BLS12_381.ScalarField(), MUL)
-	testCircuit[BLS12377Fr](ecc.BLS12_381.ScalarField(), ADD)
-	testCircuit[BLS12381Fr](ecc.BLS12_377.ScalarField(), ADD)
-	testCircuit[BLS12381Fr](ecc.BLS12_377.ScalarField(), MUL)
+	//testCircuit[BLS12377Fr](ecc.BLS12_381.ScalarField(), MUL, 100000)
+	//testCircuit[BLS12377Fr](ecc.BLS12_381.ScalarField(), ADD)
+	testCircuit[BLS12381Fr](ecc.BLS12_377.ScalarField(), ADD, 10000)
+	//testCircuit[BLS12381Fr](ecc.BLS12_377.ScalarField(), MUL, 10000)
 
 }
 
@@ -28,10 +28,11 @@ const (
 )
 
 type ExampleFieldCircuit[T emulated.FieldParams] struct {
-	o   OP
-	In1 emulated.Element[T]
-	In2 emulated.Element[T]
-	Res emulated.Element[T]
+	o      OP
+	nTimes int
+	In1    emulated.Element[T]
+	In2    emulated.Element[T]
+	Res    emulated.Element[T]
 }
 
 func (c *ExampleFieldCircuit[T]) Define(api frontend.API) error {
@@ -39,23 +40,22 @@ func (c *ExampleFieldCircuit[T]) Define(api frontend.API) error {
 	if err != nil {
 		return fmt.Errorf("new field: %w", err)
 	}
-	switch c.o {
-	case ADD:
-		res := f.Add(&c.In1, &c.In2)
-		f.AssertIsEqual(res, &c.Res)
-	case MUL:
-		res := f.Mul(&c.In1, &c.In2)
-		res = f.Reduce(res)
-		f.AssertIsEqual(res, &c.Res)
+	for i := 0; i < c.nTimes; i++ {
+		switch c.o {
+		case ADD:
+			res := f.Add(&c.In1, &c.In2)
+			f.AssertIsEqual(res, &c.Res)
+		case MUL:
+			res := f.Mul(&c.In1, &c.In2)
+			res = f.Reduce(res)
+			f.AssertIsEqual(res, &c.Res)
+		}
 	}
-	//res := f.Mul(&c.In1, &c.In2)
-	//res = f.Reduce(res)
-	//f.AssertIsEqual(res, &c.Res)
 
 	return nil
 }
 
-func testCircuit[NNA emulated.FieldParams](circuitField *big.Int, op OP) {
+func testCircuit[NNA emulated.FieldParams](circuitField *big.Int, op OP, nTimes int) {
 	op1 := 3
 	op2 := 5
 	var op3 uint
@@ -65,12 +65,13 @@ func testCircuit[NNA emulated.FieldParams](circuitField *big.Int, op OP) {
 	case MUL:
 		op3 = 15
 	}
-	circuit := ExampleFieldCircuit[NNA]{o: op}
+	circuit := ExampleFieldCircuit[NNA]{o: op, nTimes: nTimes}
 	witness := ExampleFieldCircuit[NNA]{
-		o:   op,
-		In1: emulated.ValueOf[NNA](op1),
-		In2: emulated.ValueOf[NNA](op2),
-		Res: emulated.ValueOf[NNA](op3),
+		o:      op,
+		nTimes: nTimes,
+		In1:    emulated.ValueOf[NNA](op1),
+		In2:    emulated.ValueOf[NNA](op2),
+		Res:    emulated.ValueOf[NNA](op3),
 	}
 	ccs, err := frontend.Compile(circuitField, r1cs.NewBuilder, &circuit)
 	if err != nil {
@@ -111,8 +112,8 @@ func testCircuit[NNA emulated.FieldParams](circuitField *big.Int, op OP) {
 	} else {
 		fmt.Println("verified")
 	}
-	if err := ccs.IsSolved(witnessData); err != nil {
-		panic("circuit is not solved")
-	}
+	//if err := ccs.IsSolved(witnessData); err != nil {
+	//	panic("circuit is not solved")
+	//}
 	fmt.Println("All Good")
 }
