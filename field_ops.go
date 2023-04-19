@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
@@ -86,6 +85,7 @@ func testCircuit[NNA emulated.FieldParams](circuitField *big.Int, op OP) {
 	} else {
 		fmt.Println("secret witness parsed")
 	}
+
 	publicWitnessData, err := witnessData.Public()
 	if err != nil {
 		panic(err)
@@ -98,7 +98,8 @@ func testCircuit[NNA emulated.FieldParams](circuitField *big.Int, op OP) {
 	} else {
 		fmt.Println("setup done")
 	}
-	proof, err := groth16.Prove(ccs, pk, witnessData, backend.WithHints(emulated.GetHints()...))
+	//proof, err := groth16.Prove(ccs, pk, witnessData, backend.WithHints(emulated.GetHints()...))
+	proof, err := groth16.Prove(ccs, pk, witnessData)
 	if err != nil {
 		panic(err)
 	} else {
@@ -110,11 +111,8 @@ func testCircuit[NNA emulated.FieldParams](circuitField *big.Int, op OP) {
 	} else {
 		fmt.Println("verified")
 	}
-	// Output: compiled
-	// secret witness parsed
-	// public witness parsed
-	// setup done
-	// proved
-	// verified
+	if err := ccs.IsSolved(witnessData); err != nil {
+		panic("circuit is not solved")
+	}
 	fmt.Println("All Good")
 }
