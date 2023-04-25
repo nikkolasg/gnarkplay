@@ -14,12 +14,9 @@ import (
 
 type PairingComputationCircuit struct {
 	// the witness vector is automatically allocated and initialised
-	ElG1       sw_bn254.G1Affine
-	MElG1      sw_bn254.G1Affine
-	ElG2       sw_bn254.G2Affine
-	ExpectedGt sw_bn254.GTEl
-	// the in-circuit types are fully compatible with out-circuit counterpats in
-	// gnark-crypto
+	ElG1  sw_bn254.G1Affine
+	MElG1 sw_bn254.G1Affine
+	ElG2  sw_bn254.G2Affine
 }
 
 func (c *PairingComputationCircuit) Define(api frontend.API) error {
@@ -50,12 +47,20 @@ func test_pairings() {
 
 	P.ScalarMultiplication(&g1gen, a.BigInt(new(big.Int)))
 	Q.ScalarMultiplication(&g2gen, b.BigInt(new(big.Int)))
-	var mP bn254.G1Affine
+	var mP = new(bn254.G1Affine)
 	mP = mP.Neg(&P)
+
+	ok, err := bn254.PairingCheck([]bn254.G1Affine{P, *mP}, []bn254.G2Affine{Q, Q})
+	if err != nil {
+		panic(err)
+	}
+	if !ok {
+		panic("pairing is not OK")
+	}
 
 	assignment := PairingComputationCircuit{
 		ElG1:  sw_bn254.NewG1Affine(P),
-		MElG1: sw_bn254.NewG1Affine(mP),
+		MElG1: sw_bn254.NewG1Affine(*mP),
 		ElG2:  sw_bn254.NewG2Affine(Q),
 		// automatically splits the extension field elements into limbs for
 		// non-native field arithmetic.
@@ -88,4 +93,8 @@ func test_pairings() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func test_nnaEC() {
+
 }
