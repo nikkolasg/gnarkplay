@@ -3,8 +3,8 @@ module nna
 go 1.20
 
 require (
-	github.com/consensys/gnark v0.7.2-0.20230418172633-f83323bdf138
-	github.com/consensys/gnark-crypto v0.10.0
+	github.com/consensys/gnark v0.7.2-0.20230426090440-926ad6294a89
+	github.com/consensys/gnark-crypto v0.10.1-0.20230426090045-2a781ae21a86
 )
 
 require (
